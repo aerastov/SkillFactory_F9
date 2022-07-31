@@ -14,6 +14,10 @@
         control.scrollTop(control.scrollTop() + 1000);
       }
       function connect() {
+        let timerSendPing;
+
+        let timerPong;
+
         disconnect(); // разрываем соединение если функция вызвана по-ошибке
         var wsUri = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host+window.location.pathname;
         conn = new WebSocket(wsUri); //открываем соединение
@@ -21,16 +25,38 @@
         conn.onopen = function() {
           log('Connected.');
           update_ui();
+          try {
+            timerSendPing = setInterval(() => conn.send("ping"), 5000);
+          } catch (err) {
+            clearInterval(timerSendPing);
+            alert('Потеряно соединение с сервером!')
+          };
         };
+
         conn.onmessage = function(e) {
-          log('Received: ' + e.data);
+          if (e.data != "pong") {
+            log('Received: ' + e.data);
+          };
+
+          // логика такая, каждые 5 секунд мы отправляем не сервер сообщение "ping"
+          // получив его, сервер эхом возвращает сообщение "pong" которое мы не выводим на экран
+          // как только приходит любое сообщение (pong или любое другое) мы сбрасываем setTimeout
+          // и тут же запускаем новый setTimeout на 6 секунд, если в течении 10 секунд не было никаких
+          // сообщений (время с запасом), то вызываем alert "потеря соединения" Такой вот самодельный пинг...
+          // Для проверки соединения со стороны сервера применен параметр heartbeat
+
+          clearTimeout(timerPong);
+          timerPong = setTimeout(() => alert('Потеря соединения!'), 10000);
+
         };
         conn.onclose = function() {
+          clearInterval(timerSendPing);
           log('Disconnected.');
           conn = null;
           update_ui();
         };
       }
+
       function disconnect() {
         if (conn != null) {
           log('Disconnecting...');

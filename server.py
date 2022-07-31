@@ -2,21 +2,20 @@ import os
 from aiohttp import web
 import asyncio
 from asyncio import Queue
-
+import time
 import aiohttp
 
 WS_FILE = os.path.join(os.path.dirname(__file__), "websocket.html")
 
 
 async def wshandler(request: web.Request):
-    resp = web.WebSocketResponse()
+    resp = web.WebSocketResponse(heartbeat=5)
     available = resp.can_prepare(request)
     if not available:
         with open(WS_FILE, "rb") as fp:
             return web.Response(body=fp.read(), content_type="text/html")
 
     await resp.prepare(request)
-
     await resp.send_str("Welcome!!!")
 
     try:
@@ -27,9 +26,12 @@ async def wshandler(request: web.Request):
 
         async for msg in resp:
             if msg.type == web.WSMsgType.TEXT:
-                for ws in request.app["sockets"]:
-                    if ws is not resp:
-                        await ws.send_str(msg.data)
+                if msg.data == "ping":
+                    await resp.send_str("pong")
+                else:
+                    for ws in request.app["sockets"]:
+                        if ws is not resp:
+                            await ws.send_str(msg.data)
             else:
                 return resp
         return resp
@@ -54,25 +56,5 @@ def init():
     return app
 
 
-async def producer(channel):
-    for num in range(0, 5):
-        await asyncio.sleep(1)
-        await channel.put(num)
-
-
-async def consumer(channel: Queue):
-    while True:
-        item = await channel.get()
-        print(f'Got number {item}')
-
-
-async def main():
-    channel = Queue()
-    asyncio.create_task(consumer(channel))
-
-    # When no producer finished we are done
-    await producer(channel)
-    print('Done!')
-
 web.run_app(init())
-asyncio.run(main())
+
