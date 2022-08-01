@@ -15,9 +15,7 @@
       }
       function connect() {
         let timerSendPing;
-
         let timerPong;
-
         disconnect(); // разрываем соединение если функция вызвана по-ошибке
         var wsUri = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host+window.location.pathname;
         conn = new WebSocket(wsUri); //открываем соединение
@@ -41,6 +39,7 @@
         };
         conn.onclose = function() {
           clearInterval(timerSendPing);
+          clearTimeout(timerPong);
           log('Disconnected.');
           conn = null;
           update_ui();
