@@ -27,7 +27,7 @@
             timerSendPing = setInterval(() => conn.send("ping"), 5000);
           } catch (err) {
             clearInterval(timerSendPing);
-            alert('Потеряно соединение с сервером!')
+            alert('Потеряно соединение с сервером!');
           };
         };
         conn.onmessage = function(e) {
@@ -44,15 +44,15 @@
           conn = null;
           update_ui();
         };
-      }
+      };
       function disconnect() {
         if (conn != null) {
           log('Disconnecting...');
           conn.close();
           conn = null;
           update_ui();
-        }
-      }
+        };
+      };
       function update_ui() {
         if (conn == null) {
           $('#status').text('disconnected');
@@ -60,14 +60,14 @@
         } else {
           $('#status').text('connected (' + conn.protocol + ')');
           $('#connect').html('Disconnect');
-        }
-      }
+        };
+      };
       $('#connect').click(function() {
         if (conn == null) {
           connect();
         } else {
           disconnect();
-        }
+        };
         update_ui();
         return false;
       });
@@ -82,7 +82,7 @@
         if (e.keyCode === 13) {
           $('#send').click();
           return false;
-        }
+        };
       });
     });
 </script>
